@@ -5,8 +5,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-ARG REACT_APP_API_URL=http://localhost:5000/api
-ARG REACT_APP_UPLOADS_URL=http://localhost:5000
+ARG REACT_APP_API_URL=https://generous-simplicity-production-5b4a.up.railway.app/api
+ARG REACT_APP_UPLOADS_URL=https://generous-simplicity-production-5b4a.up.railway.app
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
 ENV REACT_APP_UPLOADS_URL=$REACT_APP_UPLOADS_URL
 RUN npm run build

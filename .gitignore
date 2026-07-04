@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Build outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Prisma
+backend/prisma/migrations/dev.db*
+
+# Testing
+coverage/

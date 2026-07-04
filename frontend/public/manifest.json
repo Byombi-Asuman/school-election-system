@@ -1,0 +1,9 @@
+{
+  "short_name": "School Elections",
+  "name": "School Election Management System",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4045eb",
+  "background_color": "#ffffff"
+}

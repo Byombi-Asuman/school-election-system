@@ -6,7 +6,7 @@ import { Role } from '@prisma/client';
 export interface AuthRequest extends Request {
   user?: {
     id: string;
-    email: string | null;
+    email: string;
     role: Role;
     firstName: string;
     lastName: string;

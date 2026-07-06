@@ -34,7 +34,7 @@ export const login = async (req: Request, res: Response) => {
 
     const { accessToken, refreshToken } = generateTokens({
       userId: user.id,
-      email: user.email ?? null,
+      email: user.email,
       role: user.role,
     });
 
@@ -65,7 +65,7 @@ export const login = async (req: Request, res: Response) => {
       refreshToken,
       user: {
         id: user.id,
-       email: user.email ?? null,
+        email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
@@ -118,7 +118,7 @@ export const studentLogin = async (req: Request, res: Response) => {
 
     const { accessToken, refreshToken } = generateTokens({
       userId: student.user.id,
-      email: student.user.email ?? null,
+      email: student.user.email,
       role: student.user.role,
     });
 
@@ -147,7 +147,7 @@ export const studentLogin = async (req: Request, res: Response) => {
       refreshToken,
       user: {
         id: student.user.id,
-        email: student.user.email ?? null,
+        email: student.user.email,
         firstName: student.user.firstName,
         lastName: student.user.lastName,
         role: student.user.role,

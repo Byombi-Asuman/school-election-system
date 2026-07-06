@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { createAuditLog } from '../utils/audit';
 import { sendOtpEmail } from '../utils/email';
 
-const OTP_VALIDITY_MINUTES = 20;
+const OTP_VALIDITY_MINUTES = 15;
 
 const generateCode = (): string => {
   // 4-digit numeric code, cryptographically random
@@ -62,17 +62,8 @@ export const generateOtp = async (req: AuthRequest, res: Response) => {
       req,
     });
 
-    let emailSent = false;
+    const emailSent = await sendOtpEmail(student.user.email, student.user.firstName, student.username, code, OTP_VALIDITY_MINUTES);
 
-if (student.user.email) {
-  emailSent = await sendOtpEmail(
-    student.user.email,
-    student.user.firstName,
-    student.username,
-    code,
-    OTP_VALIDITY_MINUTES
-  );
-}
     res.status(201).json({
       code,
       expiresAt,
@@ -80,7 +71,7 @@ if (student.user.email) {
       emailSent,
       student: {
         name: `${student.user.firstName} ${student.user.lastName}`,
-        email: student.user.email ?? null,
+        email: student.user.email,
         username: student.username,
         admissionNumber: student.admissionNumber,
       },

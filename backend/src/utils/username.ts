@@ -7,9 +7,8 @@ import prisma from './prisma';
 const buildBaseUsername = (firstName: string, lastName: string): string => {
   const clean = (s: string) => s.trim().replace(/[^a-zA-Z]/g, '');
   const first = clean(firstName).toLowerCase();
-  const last = clean(lastName);
-  const lastCapitalized = last.charAt(0).toUpperCase() + last.slice(1).toLowerCase();
-  return `${first}${lastCapitalized}@lvk`;
+  const last = clean(lastName).toLowerCase();
+  return `${first}${last}@lvk`;
 };
 
 /**

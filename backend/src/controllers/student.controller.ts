@@ -78,7 +78,7 @@ export const createStudent = async (req: AuthRequest, res: Response) => {
 
     const user = await prisma.user.create({
       data: {
-        email: email.toLowerCase(),
+        email: email? email.toLowerCase(): null,
         password: hashed,
         firstName,
         lastName,

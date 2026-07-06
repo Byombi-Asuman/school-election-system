@@ -165,7 +165,7 @@ export const LoginPage: React.FC = () => {
                   label="Username"
                   type="text"
                   autoComplete="username"
-                  placeholder="e.g. jamesWilson@lvk"
+                  placeholder="e.g. jameswilson@lvk"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   error={studentErrors.username}
@@ -175,8 +175,8 @@ export const LoginPage: React.FC = () => {
                   label="One-Time Password"
                   type="text"
                   inputMode="numeric"
-                  maxLength={6}
-                  placeholder="6-digit code"
+                  maxLength={4}
+                  placeholder="4-digit code"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
                   error={studentErrors.otp}

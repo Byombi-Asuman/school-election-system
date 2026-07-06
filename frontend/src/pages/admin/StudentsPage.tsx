@@ -39,7 +39,7 @@ export const StudentsPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.firstName || !form.lastName || !form.admissionNumber || !form.class) {
+    if (!form.firstName || !form.lastName || !form.admissionNumber || !form.class) {
       return toast.error('Please fill all required fields');
     }
     setSubmitting(true);
@@ -248,7 +248,7 @@ export const StudentsPage: React.FC = () => {
             <Input label="First Name" required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
             <Input label="Last Name" required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
           </div>
-          <Input label="Email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <Input label="Admission Number" required value={form.admissionNumber} onChange={(e) => setForm({ ...form, admissionNumber: e.target.value })} />
           <div className="grid grid-cols-2 gap-4">
             <Input label="Class" required value={form.class} onChange={(e) => setForm({ ...form, class: e.target.value })} placeholder="e.g. Form 4" />

@@ -8,9 +8,9 @@ import { sendOtpEmail } from '../utils/email';
 const OTP_VALIDITY_MINUTES = 15;
 
 const generateCode = (): string => {
-  // 6-digit numeric code, cryptographically random
-  const num = crypto.randomInt(0, 1000000);
-  return num.toString().padStart(6, '0');
+  // 4-digit numeric code, cryptographically random
+  const num = crypto.randomInt(0, 10000);
+  return num.toString().padStart(4, '0');
 };
 
 export const generateOtp = async (req: AuthRequest, res: Response) => {

@@ -40,7 +40,7 @@ export interface Election {
   createdAt: string;
   updatedAt: string;
   createdBy?: { firstName: string; lastName: string };
-  admin?: { firstName: string; lastName: string } | null;
+  admin?: {id: string; firstName: string; lastName: string; } | null;
   positions?: Position[];
   _count?: { positions: number; candidates: number; votes: number };
 }
@@ -162,6 +162,7 @@ export interface ResultData {
     positionTitle: string;
     maxWinners: number;
     totalVotes: number;
+    hasTie: boolean;
     candidates: Array<{
       id: string;
       studentId: string;
@@ -171,6 +172,7 @@ export interface ResultData {
       voteCount: number;
       percentage: number;
       isWinner: boolean;
+      isTiedForWinner: boolean;
     }>;
   }>;
   summary: {
@@ -202,6 +204,7 @@ export interface OtpGenerateResponse {
 
 export interface ActiveOtp {
   id: string;
+  code: string;
   studentName: string;
   studentEmail: string;
   username: string;

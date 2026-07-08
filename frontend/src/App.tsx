@@ -19,6 +19,7 @@ import OtpPage from './pages/admin/OtpPage';
 import ResultsPage from './pages/admin/ResultsPage';
 import ReportsPage from './pages/admin/ReportsPage';
 import AnnouncementsPage from './pages/admin/AnnouncementsPage';
+import AdminsPage from './pages/admin/AdminsPage';
 import AuditLogsPage from './pages/admin/AuditLogsPage';
 import SettingsPage from './pages/admin/SettingsPage';
 
@@ -64,6 +65,7 @@ const App: React.FC = () => {
         <Route path="/admin/results/:id" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ELECTION_ADMIN']}><ResultsPage /></ProtectedRoute>} />
         <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ELECTION_ADMIN']}><ReportsPage /></ProtectedRoute>} />
         <Route path="/admin/announcements" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ELECTION_ADMIN']}><AnnouncementsPage /></ProtectedRoute>} />
+        <Route path="/admin/admins" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminsPage /></ProtectedRoute>} />
         <Route path="/admin/audit-logs" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AuditLogsPage /></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SettingsPage /></ProtectedRoute>} />
 

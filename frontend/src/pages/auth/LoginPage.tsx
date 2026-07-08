@@ -100,7 +100,7 @@ export const LoginPage: React.FC = () => {
               Democracy starts in the classroom.
             </h1>
             <p className="text-primary-100 text-lg leading-relaxed">
-              A secure, transparent platform for running student government elections —
+              A secure, transparent platform for running students elections 
               from candidate registration to live results.
             </p>
             <div className="mt-8 flex gap-8">
@@ -191,7 +191,7 @@ export const LoginPage: React.FC = () => {
               <div className="mt-6 p-3 rounded-lg bg-slate-100 border border-slate-200 flex items-start gap-2">
                 <Icons.Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-500">
-                  Don't have an OTP? Ask your Super Admin or Election Administrator to generate one for you —
+                  Don't have an OTP? Ask your Election Administrator to generate one for you —
                   it's valid for 15 minutes and can only be used once.
                 </p>
               </div>
@@ -206,7 +206,7 @@ export const LoginPage: React.FC = () => {
                   label="Email address"
                   type="email"
                   autoComplete="email"
-                  placeholder="you@school.edu"
+                  placeholder="you@school.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   error={staffErrors.email}
@@ -257,10 +257,10 @@ export const LoginPage: React.FC = () => {
               </form>
 
               <div className="mt-8 p-4 rounded-xl bg-slate-100 border border-slate-200">
-                <p className="text-xs font-semibold text-slate-600 mb-2">Demo credentials</p>
+                <p className="text-xs font-semibold text-slate-600 mb-2">Dear Voter,</p>
                 <div className="space-y-1 text-xs text-slate-500 font-mono">
-                  <p>superadmin@school.edu / Admin@123</p>
-                  <p>electionadmin@school.edu / Admin@123</p>
+                  <p>You should be guaranteed that your vote matters alot,</p>
+                  <p>Shall be counted and has a much Weight &#10004; </p>
                 </div>
               </div>
             </>

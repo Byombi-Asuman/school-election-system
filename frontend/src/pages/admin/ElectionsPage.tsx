@@ -6,14 +6,14 @@ import { Button } from '../../components/ui/Button';
 import { Input, Textarea, Select } from '../../components/ui/FormControls';
 import { Icons } from '../../components/ui/Icons';
 import { electionService } from '../../services/electionService';
+import { adminService, ElectionAdmin } from '../../services/adminService';
 import { Election, ElectionStatus } from '../../types';
 import { getErrorMessage } from '../../services/api';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
-import { datetimeLocalToUgandaISO, isoToUgandaDatetimeLocal, formatUgandaDate } from '../../utils/timezone';
 
-const emptyForm = { title: '', description: '', startDate: '', endDate: '' };
+const emptyForm = { title: '', description: '', startDate: '', endDate: '', adminId: '' };
 
 const nextStatusOptions: Record<ElectionStatus, { status: ElectionStatus; label: string; variant: 'success' | 'secondary' | 'danger' }[]> = {
   DRAFT: [{ status: 'OPEN', label: 'Open Election', variant: 'success' }],
@@ -38,7 +38,9 @@ export const ElectionsPage: React.FC = () => {
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Election | null>(null);
+  const [admins, setAdmins] = useState<ElectionAdmin[]>([]);
   const user = useAuthStore((s) => s.user);
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const load = useCallback(() => {
     setLoading(true);
@@ -49,6 +51,13 @@ export const ElectionsPage: React.FC = () => {
   }, [statusFilter]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    adminService.getAll()
+      .then((res) => setAdmins(res.admins.filter((a) => a.isActive)))
+      .catch(() => {});
+  }, [isSuperAdmin]);
 
   const openCreate = () => {
     setEditing(null);
@@ -61,40 +70,41 @@ export const ElectionsPage: React.FC = () => {
     setForm({
       title: e.title,
       description: e.description || '',
-    startDate: isoToUgandaDatetimeLocal(e.startDate),
-endDate: isoToUgandaDatetimeLocal(e.endDate),
+      startDate: e.startDate.slice(0, 16),
+      endDate: e.endDate.slice(0, 16),
+      adminId: e.admin?.id || '',
     });
     setModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!form.title || !form.startDate || !form.endDate) return toast.error('Please fill all required fields');
-  if (new Date(form.endDate) <= new Date(form.startDate)) return toast.error('End date must be after start date');
+    e.preventDefault();
+    if (!form.title || !form.startDate || !form.endDate) return toast.error('Please fill all required fields');
+    if (new Date(form.endDate) <= new Date(form.startDate)) return toast.error('End date must be after start date');
 
-  const payload = {
-    ...form,
-    startDate: datetimeLocalToUgandaISO(form.startDate),
-    endDate: datetimeLocalToUgandaISO(form.endDate),
-  };
+    setSubmitting(true);
+    try {
+      // Only send adminId when this user is actually allowed to set it —
+      // otherwise an empty string here would trip the backend's permission
+      // check for election admins who aren't touching this field at all.
+      const { adminId, ...rest } = form;
+      const payload: any = isSuperAdmin ? { ...rest, adminId: adminId || null } : rest;
 
-  setSubmitting(true);
-  try {
-    if (editing) {
-      await electionService.update(editing.id, payload);
-      toast.success('Election updated');
-    } else {
-      await electionService.create(payload);
-      toast.success('Election created');
+      if (editing) {
+        await electionService.update(editing.id, payload);
+        toast.success('Election updated');
+      } else {
+        await electionService.create(payload);
+        toast.success('Election created');
+      }
+      setModalOpen(false);
+      load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
     }
-    setModalOpen(false);
-    load();
-  } catch (err) {
-    toast.error(getErrorMessage(err));
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   const handleStatusChange = async (election: Election, status: ElectionStatus) => {
     try {
@@ -181,9 +191,9 @@ endDate: isoToUgandaDatetimeLocal(e.endDate),
               </div>
 
               <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-4">
-                <span>{formatUgandaDate(election.startDate)}</span>
-                  <span>→</span>
-                <span>{formatUgandaDate(election.endDate)}</span>
+                <span>{format(new Date(election.startDate), 'MMM d, yyyy')}</span>
+                <span>→</span>
+                <span>{format(new Date(election.endDate), 'MMM d, yyyy')}</span>
               </div>
 
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
@@ -229,6 +239,17 @@ endDate: isoToUgandaDatetimeLocal(e.endDate),
             <Input label="Start Date & Time" type="datetime-local" required value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
             <Input label="End Date & Time" type="datetime-local" required value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
           </div>
+          {isSuperAdmin && (
+            <Select
+              label="Assign Election Admin"
+              value={form.adminId}
+              onChange={(e) => setForm({ ...form, adminId: e.target.value })}
+              options={[
+                { value: '', label: 'Unassigned' },
+                ...admins.map((a) => ({ value: a.id, label: `${a.firstName} ${a.lastName} (${a.email})` })),
+              ]}
+            />
+          )}
         </form>
       </Modal>
 

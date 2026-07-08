@@ -20,7 +20,7 @@ export const getSettings = async (req: AuthRequest, res: Response) => {
 export const updateSettings = async (req: AuthRequest, res: Response) => {
   try {
     const { name, address, phone, email, website, motto, rules } = req.body;
-    const logo = req.file ? `/uploads/logos/${req.file.filename}` : undefined;
+    const logo = req.file ? (req.file as any).path : undefined;
 
     let school = await prisma.school.findFirst();
     if (!school) {

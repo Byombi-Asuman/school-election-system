@@ -20,7 +20,8 @@ export const StudentCandidacyPage: React.FC = () => {
   const [elections, setElections] = useState<Election[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [form, setForm] = useState({ electionId: '', positionId: '', manifesto: '' });
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const user = useAuthStore((s) => s.user);
 
@@ -52,28 +53,28 @@ export const StudentCandidacyPage: React.FC = () => {
   }, [form.electionId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.electionId || !form.positionId || !data?.student) return toast.error('Please select election and position');
-    setSubmitting(true);
-    try {
-      const fd = new FormData();
-      fd.append('electionId', form.electionId);
-      fd.append('positionId', form.positionId);
-      fd.append('studentId', data.student.id);
-      fd.append('manifesto', form.manifesto);
-      if (photoFile) fd.append('photo', photoFile);
-      await candidateService.register(fd);
-      toast.success('Your candidacy application has been submitted for review');
-      setModalOpen(false);
-      setForm({ electionId: '', positionId: '', manifesto: '' });
-      setPhotoFile(null);
-      load();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  e.preventDefault();
+  if (!form.electionId || !form.positionId || !data?.student) return toast.error('Please select election and position');
+  setSubmitting(true);
+  try {
+    await candidateService.register({
+      electionId: form.electionId,
+      positionId: form.positionId,
+      studentId: data.student.id,
+      manifesto: form.manifesto,
+      photo: photoUrl,
+    });
+    toast.success('Your candidacy application has been submitted for review');
+    setModalOpen(false);
+    setForm({ electionId: '', positionId: '', manifesto: '' });
+    setPhotoUrl(null);
+    load();
+  } catch (err) {
+    toast.error(getErrorMessage(err));
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleWithdraw = async (candidateId: string) => {
     if (!window.confirm('Are you sure you want to withdraw your candidacy? This cannot be undone.')) return;
@@ -178,9 +179,32 @@ export const StudentCandidacyPage: React.FC = () => {
             rows={5}
           />
           <div className="form-group">
-            <label className="label">Your Photo</label>
-            <input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} className="input" />
-          </div>
+  <label className="label">Your Photo</label>
+  <input
+    type="file"
+    accept="image/*"
+    disabled={photoUploading}
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setPhotoUploading(true);
+      try {
+        const url = await candidateService.uploadPhoto(file);
+        setPhotoUrl(url);
+        toast.success('Photo uploaded');
+      } catch (err) {
+        toast.error(getErrorMessage(err));
+      } finally {
+        setPhotoUploading(false);
+      }
+    }}
+    className="input"
+  />
+  {photoUploading && <p className="text-xs text-slate-500 mt-1">Uploading photo…</p>}
+  {photoUrl && !photoUploading && (
+    <img src={photoUrl} alt="Preview" className="w-16 h-16 rounded-lg object-cover mt-2" />
+  )}
+</div>
         </form>
       </Modal>
     </DashboardLayout>

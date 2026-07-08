@@ -54,20 +54,42 @@ export const getResults = async (req: AuthRequest, res: Response) => {
           .sort((a, b) => b.voteCount - a.voteCount);
 
         // Declare winners (top N based on maxWinners)
-        const winners = ranked.slice(0, position.maxWinners).map(c => c.id);
+
+        let winners: string[] = [];
+        let tiedIds: string[] = [];
+        let hasTie = false;
+
+        if (ranked.length > 0) {
+          const cutoffScore = ranked[Math.min(position.maxWinners, ranked.length) - 1].voteCount;
+          const aboveCutoff = ranked.filter(c => c.voteCount > cutoffScore).map(c => c.id);
+          const atCutoff = ranked.filter(c => c.voteCount === cutoffScore).map(c => c.id);
+          const remainingSlots = position.maxWinners - aboveCutoff.length;
+
+          if (atCutoff.length > remainingSlots && remainingSlots > 0) {
+            // Ambiguous — more candidates tied at the cutoff score than slots left
+            hasTie = true;
+            tiedIds = atCutoff;
+            winners = aboveCutoff;
+          } else {
+            winners = [...aboveCutoff, ...atCutoff.slice(0, Math.max(remainingSlots, 0))];
+          }
+        }
 
         return {
           positionId: position.id,
           positionTitle: position.title,
           maxWinners: position.maxWinners,
           totalVotes: totalVotesForPosition,
+          hasTie,
           candidates: ranked.map(c => ({
             ...c,
             isWinner: winners.includes(c.id),
+            isTiedForWinner: tiedIds.includes(c.id),
           })),
         };
       })
     );
+
 
     // Overall stats
     const totalVoters = await prisma.student.count({ where: { isEligible: true } });

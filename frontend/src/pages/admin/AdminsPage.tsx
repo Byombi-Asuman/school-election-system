@@ -37,7 +37,7 @@ export const AdminsPage: React.FC = () => {
     setSubmitting(true);
     try {
       const res = await adminService.create(form);
-      toast.success(`Election admin created. Temp password: ${res.tempPassword}`, { duration: 8000 });
+      toast.success(`Election admin created. Temp password: ${res.tempPassword}`, { duration: 40000 });
       setModalOpen(false);
       setForm(emptyForm);
       load();
@@ -61,7 +61,7 @@ export const AdminsPage: React.FC = () => {
   const handleResetPassword = async (a: ElectionAdmin) => {
     try {
       const res = await adminService.resetPassword(a.id);
-      toast.success(`New temp password for ${a.firstName}: ${res.tempPassword}`, { duration: 8000 });
+      toast.success(`New temp password for ${a.firstName}: ${res.tempPassword}`, { duration: 40000 });
     } catch (err) {
       toast.error(getErrorMessage(err));
     }

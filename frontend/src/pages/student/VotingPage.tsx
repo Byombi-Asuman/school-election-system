@@ -172,7 +172,7 @@ export const VotingPage: React.FC = () => {
                   >
                     <div className="relative aspect-square bg-slate-100">
                       {candidate.photo ? (
-                        <img src={`${UPLOADS_URL}${candidate.photo}`} alt="" className="w-full h-full object-cover" />
+                        <img src={candidate.photo?.startsWith('http') ? candidate.photo : `${UPLOADS_URL}${candidate.photo}`} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
                           <Icons.User className="w-24 h-24 text-slate-300" />

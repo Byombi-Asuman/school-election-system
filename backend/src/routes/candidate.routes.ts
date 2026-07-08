@@ -8,6 +8,7 @@ router.use(authenticate);
 
 router.get('/', candidateController.getCandidates);
 router.get('/:id', candidateController.getCandidate);
+router.post('/upload-photo', uploadPhoto.single('photo'), candidateController.uploadCandidatePhoto);
 router.post('/', isAdmin, uploadPhoto.single('photo'), candidateController.registerCandidate);
 router.put('/:id', isAdmin, uploadPhoto.single('photo'), candidateController.updateCandidate);
 router.patch('/:id/approve', isAdmin, candidateController.approveCandidate);

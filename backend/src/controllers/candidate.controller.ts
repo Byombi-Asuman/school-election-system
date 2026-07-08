@@ -55,10 +55,15 @@ export const getCandidate = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const uploadCandidatePhoto = async (req: AuthRequest, res: Response) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ url: (req.file as any).path });
+};
+
 export const registerCandidate = async (req: AuthRequest, res: Response) => {
   try {
     const { electionId, positionId, studentId, manifesto } = req.body;
-    const photo = req.file ? `/uploads/photos/${req.file.filename}` : null;
+    const photo = req.file ? (req.file as any).path : (req.body.photo || null);
 
     // Validate election is in DRAFT or OPEN status
     const election = await prisma.election.findUnique({ where: { id: electionId } });
@@ -124,7 +129,7 @@ export const updateCandidate = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { manifesto } = req.body;
-    const photo = req.file ? `/uploads/photos/${req.file.filename}` : undefined;
+    const photo = req.file ? (req.file as any).path : (req.body.photo || undefined);
 
     const candidate = await prisma.candidate.update({
       where: { id },

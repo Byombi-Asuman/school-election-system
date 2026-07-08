@@ -136,7 +136,9 @@ export const ReportsPage: React.FC = () => {
                       <td className="py-2">{c.voteCount}</td>
                       <td className="py-2">{c.percentage}%</td>
                       <td className="py-2">
-                        {c.isWinner ? (
+                        {c.isTiedForWinner ? (
+                          <span className="badge-yellow">Draw</span>
+                        ) : c.isWinner ? (
                           <span className="badge-green">Winner</span>
                         ) : (
                           <span className="badge-gray">—</span>

@@ -132,6 +132,11 @@ export const ResultsPage: React.FC = () => {
                 <h3 className="font-semibold text-slate-900">{pos.positionTitle}</h3>
                 <p className="text-xs text-slate-500">{pos.totalVotes} total votes · {pos.maxWinners} winner{pos.maxWinners > 1 ? 's' : ''}</p>
               </div>
+              {pos.hasTie && (
+                <span className="badge badge-yellow text-xs flex items-center gap-1">
+                  ⚠️ Tie — needs manual resolution
+                </span>
+              )}
             </div>
             <div className="card-body grid lg:grid-cols-2 gap-6">
               <div className="h-64">
@@ -145,7 +150,7 @@ export const ResultsPage: React.FC = () => {
                 {pos.candidates.map((c) => (
                   <div key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border ${c.isWinner ? 'bg-amber-50 border-amber-200' : 'border-slate-100'}`}>
                     <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
-                      {c.photo ? <img src={`${UPLOADS_URL}${c.photo}`} alt="" className="w-full h-full object-cover" /> : <Icons.User className="w-5 h-5 text-slate-400" />}
+                      {c.photo ? <img src={c.photo.startsWith('http') ? c.photo : `${UPLOADS_URL}${c.photo}`} alt="" className="w-full h-full object-cover" /> : <Icons.User className="w-5 h-5 text-slate-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 truncate flex items-center gap-1.5">

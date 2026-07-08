@@ -80,22 +80,30 @@ export const StudentResultsPage: React.FC = () => {
             <div className="stat-card"><div className="stat-icon bg-amber-100 text-amber-700"><Icons.Trophy className="w-5 h-5" /></div><div><p className="text-sm text-slate-500">Turnout</p><p className="text-xl font-bold">{data.summary.turnoutPercent}%</p></div></div>
           </div>
 
+          
           {data.results.map((pos) => (
             <div key={pos.positionId} className="card">
-              <div className="card-header">
-                <h3 className="font-semibold text-slate-900">{pos.positionTitle}</h3>
-                <p className="text-xs text-slate-500">{pos.totalVotes} votes</p>
+              <div className="card-header flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-slate-900">{pos.positionTitle}</h3>
+                  <p className="text-xs text-slate-500">{pos.totalVotes} votes</p>
+                </div>
+                {pos.hasTie && <span className="badge-yellow text-xs">⚠️ Tie</span>}
               </div>
               <div className="card-body space-y-3">
                 {pos.candidates.map((c) => (
-                  <div key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border ${c.isWinner ? 'bg-amber-50 border-amber-200' : 'border-slate-100'}`}>
+                  <div key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border ${c.isWinner ? 'bg-amber-50 border-amber-200' : c.isTiedForWinner ? 'bg-yellow-50 border-yellow-300' : 'border-slate-100'}`}>
                     <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
-                      {c.photo ? <img src={`${UPLOADS_URL}${c.photo}`} alt="" className="w-full h-full object-cover" /> : <Icons.User className="w-5 h-5 text-slate-400" />}
-                    </div>
+                      {c.photo ? <img src={c.photo.startsWith('http') ? c.photo : `${UPLOADS_URL}${c.photo}`} alt="" className="w-full h-full object-cover" /> : <Icons.User className="w-5 h-5 text-slate-400" />}                    
+                      </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 flex items-center gap-1.5">{c.name} {c.isWinner && <Icons.Trophy className="w-3.5 h-3.5 text-amber-500" />}</p>
+                      <p className="text-sm font-medium text-slate-900 flex items-center gap-1.5">
+                        {c.name}
+                        {c.isWinner && <Icons.Trophy className="w-3.5 h-3.5 text-amber-500" />}
+                        {c.isTiedForWinner && <span className="badge-yellow text-[10px]">Draw</span>}
+                      </p>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
-                        <div className={`h-full rounded-full ${c.isWinner ? 'bg-amber-500' : 'bg-primary-500'}`} style={{ width: `${c.percentage}%` }} />
+                        <div className={`h-full rounded-full ${c.isWinner ? 'bg-amber-500' : c.isTiedForWinner ? 'bg-yellow-400' : 'bg-primary-500'}`} style={{ width: `${c.percentage}%` }} />
                       </div>
                     </div>
                     <div className="text-right shrink-0">

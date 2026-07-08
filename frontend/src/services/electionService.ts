@@ -6,6 +6,7 @@ export const electionService = {
     api.get('/elections', { params }).then((r) => r.data as { elections: Election[]; total: number }),
 
   getOne: (id: string) => api.get<Election>(`/elections/${id}`).then((r) => r.data),
+  
 
   create: (data: { title: string; description?: string; startDate: string; endDate: string; adminId?: string }) =>
     api.post<Election>('/elections', data).then((r) => r.data),

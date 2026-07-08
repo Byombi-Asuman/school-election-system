@@ -75,7 +75,7 @@ export const SettingsPage: React.FC = () => {
               {logoPreview ? (
                 <img src={logoPreview} alt="Logo preview" className="w-full h-full object-cover" />
               ) : school.logo ? (
-                <img src={`${UPLOADS_URL}${school.logo}`} alt="School logo" className="w-full h-full object-cover" />
+                <img src={school.logo?.startsWith('http') ? school.logo : `${UPLOADS_URL}${school.logo}`} alt="School logo" className="w-full h-full object-cover" />
               ) : (
                 <Icons.Shield className="w-8 h-8 text-slate-300" />
               )}

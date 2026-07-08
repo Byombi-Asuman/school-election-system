@@ -36,25 +36,34 @@ export const OtpPage: React.FC = () => {
   const [activeOtps, setActiveOtps] = useState<ActiveOtp[]>([]);
   const [loadingActive, setLoadingActive] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set());
+  const toggleReveal = (id: string) => {
+  setRevealedIds((prev) => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+};
+  
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
   const countdown = useCountdown(result?.expiresAt || null);
 
-  const loadActive = useCallback(() => {
-    setLoadingActive(true);
-    otpService.getActive()
-      .then(setActiveOtps)
-      .catch((err) => toast.error(getErrorMessage(err)))
-      .finally(() => setLoadingActive(false));
-  }, []);
+  const loadActive = useCallback((isInitial = false) => {
+  if (isInitial) setLoadingActive(true);
+  otpService.getActive()
+    .then(setActiveOtps)
+    .catch((err) => toast.error(getErrorMessage(err)))
+    .finally(() => { if (isInitial) setLoadingActive(false); });
+}, []);
 
-  useEffect(() => { loadActive(); }, [loadActive]);
+  useEffect(() => { loadActive(true); }, [loadActive]);
 
   // Refresh the active list periodically so expired OTPs drop off
-  useEffect(() => {
-    const interval = setInterval(loadActive, 20000);
-    return () => clearInterval(interval);
-  }, [loadActive]);
+ useEffect(() => {
+  const interval = setInterval(() => loadActive(false), 20000);
+  return () => clearInterval(interval);
+}, [loadActive]);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +120,7 @@ export const OtpPage: React.FC = () => {
               label="Student Username"
               type="text"
               required
-              placeholder="e.g. jamesWilson@lvk"
+              placeholder="e.g. jameswilson@lvk"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
@@ -174,7 +183,7 @@ export const OtpPage: React.FC = () => {
           <div className="card-header flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-slate-900">Active OTPs</h3>
-              <p className="text-xs text-slate-500">Codes currently valid across all students (codes hidden for security)</p>
+              <p className="text-xs text-slate-500">Tap a code to reveal it if a student needs it again</p>
             </div>
           </div>
           {loadingActive ? (
@@ -189,10 +198,19 @@ export const OtpPage: React.FC = () => {
                     <p className="text-sm font-medium text-slate-900 truncate">{o.studentName}</p>
                     <p className="text-xs text-slate-500 truncate font-mono">{o.username}</p>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-slate-400">Generated {formatDistanceToNow(new Date(o.createdAt), { addSuffix: true })}</p>
-                    <p className="text-xs text-primary-600 font-medium">Expires {formatDistanceToNow(new Date(o.expiresAt), { addSuffix: true })}</p>
-                  </div>
+                  <div className="text-right shrink-0 flex items-center gap-3">
+              <div>
+                <p className="text-xs text-slate-400">Generated {formatDistanceToNow(new Date(o.createdAt), { addSuffix: true })}</p>
+                <p className="text-xs text-primary-600 font-medium">Expires {formatDistanceToNow(new Date(o.expiresAt), { addSuffix: true })}</p>
+              </div>
+              <button
+                onClick={() => toggleReveal(o.id)}
+                className="btn-secondary btn-sm font-mono"
+                title={revealedIds.has(o.id) ? 'Hide code' : 'Show code'}
+              >
+                {revealedIds.has(o.id) ? o.code : '••••'}
+              </button>
+            </div>
                 </div>
               ))}
             </div>
@@ -206,9 +224,8 @@ export const OtpPage: React.FC = () => {
           <p className="font-medium">How this works</p>
           <p className="mt-1 text-amber-700">
             Each OTP is valid for 15 minutes and can only be used once. Students use it, together with their username,
-            to <strong>log in</strong> — there's no separate password. Once logged in, they can browse the dashboard and
-            vote without re-entering the code. Generating a new OTP for a student automatically invalidates any earlier
-            unused code for that student. If email is configured, the code is also sent to the student automatically.
+            to <strong>log in</strong> — there's no separate password. Generating a new OTP for a student automatically invalidates any earlier
+            unused code for that student.
           </p>
         </div>
       </div>

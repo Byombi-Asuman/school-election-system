@@ -97,11 +97,12 @@ export const createAdmin = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ message: 'Election admin created', admin, tempPassword });
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      return res.status(409).json({ error: 'An account with this email already exists' });
-    }
-    res.status(500).json({ error: 'Failed to create election admin' });
+  console.error('createAdmin error:', error);
+  if (error.code === 'P2002') {
+    return res.status(409).json({ error: 'Email already exists' });
   }
+  res.status(500).json({ error: 'Failed to create election admin' });
+}
 };
 
 // PUT /api/admins/:id — SUPER_ADMIN only.

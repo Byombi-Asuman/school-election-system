@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import authRoutes from './routes/auth.routes';
+import adminManagementRoutes from './routes/admin.routes';
 import electionRoutes from './routes/election.routes';
 import positionRoutes from './routes/position.routes';
 import candidateRoutes from './routes/candidate.routes';
@@ -25,6 +26,7 @@ import dashboardRoutes from './routes/dashboard.routes';
 import otpRoutes from './routes/otp.routes';
 import { errorHandler } from './middleware/error.middleware';
 import { logger } from './utils/logger';
+
 
 
 const app = express();
@@ -87,6 +89,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admins', adminManagementRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/elections', electionRoutes);
 app.use('/api/positions', positionRoutes);

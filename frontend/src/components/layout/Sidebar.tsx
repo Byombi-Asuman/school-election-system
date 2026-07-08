@@ -19,6 +19,7 @@ const navItems: NavItem[] = [
   { to: '/admin/results', label: 'Results', icon: Icons.Results, roles: ['SUPER_ADMIN', 'ELECTION_ADMIN'] },
   { to: '/admin/reports', label: 'Reports', icon: Icons.Download, roles: ['SUPER_ADMIN', 'ELECTION_ADMIN'] },
   { to: '/admin/announcements', label: 'Announcements', icon: Icons.Megaphone, roles: ['SUPER_ADMIN', 'ELECTION_ADMIN'] },
+  { to: '/admin/admins', label: 'Election Admins', icon: Icons.Shield, roles: ['SUPER_ADMIN'] },
   { to: '/admin/audit-logs', label: 'Audit Logs', icon: Icons.Audit, roles: ['SUPER_ADMIN'] },
   { to: '/admin/settings', label: 'Settings', icon: Icons.Settings, roles: ['SUPER_ADMIN'] },
 ];

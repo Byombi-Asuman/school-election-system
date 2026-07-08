@@ -16,7 +16,7 @@ export const getElections = async (req: AuthRequest, res: Response) => {
         where,
         include: {
           createdBy: { select: { firstName: true, lastName: true } },
-          admin: { select: { firstName: true, lastName: true } },
+          admin: { select: { id: true, firstName: true, lastName: true, email: true } },
           _count: { select: { positions: true, candidates: true, votes: true } },
         },
         orderBy: { createdAt: 'desc' },
@@ -38,7 +38,7 @@ export const getElection = async (req: AuthRequest, res: Response) => {
       where: { id: req.params.id },
       include: {
         createdBy: { select: { firstName: true, lastName: true } },
-        admin: { select: { firstName: true, lastName: true } },
+        admin: { select: { id: true, firstName: true, lastName: true, email: true } },
         positions: {
           orderBy: { order: 'asc' },
           include: {
@@ -58,7 +58,22 @@ export const getElection = async (req: AuthRequest, res: Response) => {
 
 export const createElection = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, startDate, endDate, adminId } = req.body;
+    const { title, description, startDate, endDate } = req.body;
+    let { adminId } = req.body;
+
+    if (adminId) {
+      // Only a Super Admin can assign an election admin; anyone else's
+      // adminId is silently ignored rather than trusted from the request.
+      if (req.user!.role !== 'SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Only a super admin can assign an election admin' });
+      }
+      const candidate = await prisma.user.findUnique({ where: { id: adminId } });
+      if (!candidate || candidate.role !== 'ELECTION_ADMIN' || !candidate.isActive) {
+        return res.status(400).json({ error: 'Selected admin is not a valid, active election admin' });
+      }
+    } else {
+      adminId = undefined;
+    }
 
     const election = await prisma.election.create({
       data: {
@@ -90,6 +105,18 @@ export const updateElection = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { title, description, startDate, endDate, adminId, liveResults } = req.body;
+
+    if (adminId !== undefined) {
+      if (req.user!.role !== 'SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Only a super admin can assign or change an election admin' });
+      }
+      if (adminId !== null) {
+        const candidate = await prisma.user.findUnique({ where: { id: adminId } });
+        if (!candidate || candidate.role !== 'ELECTION_ADMIN' || !candidate.isActive) {
+          return res.status(400).json({ error: 'Selected admin is not a valid, active election admin' });
+        }
+      }
+    }
 
     const election = await prisma.election.update({
       where: { id },

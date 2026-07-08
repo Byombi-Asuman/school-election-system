@@ -7,12 +7,15 @@ import { Input, Textarea } from '../../components/ui/FormControls';
 import { Icons } from '../../components/ui/Icons';
 import { electionService } from '../../services/electionService';
 import { positionService } from '../../services/positionService';
-import { Election, Position } from '../../types';
+import { adminService, ElectionAdmin } from '../../services/adminService';
+import { useAuthStore } from '../../store/authStore'; // ⬅ added — adjust path if your store lives elsewhere
+import { Election, Position } from '../../types'; // ⬅ added ElectionAdmin
 import { getErrorMessage } from '../../services/api';
 import { PRESET_POSITIONS } from '../../utils/presetPositions';
-import { format } from 'date-fns';
 import { formatUganda } from '../../utils/timezone';
 import toast from 'react-hot-toast';
+import { Select } from '../../components/ui/FormControls';
+// (removed unused `format` import from date-fns)
 
 const emptyForm = { title: '', description: '', maxWinners: 1, maxContestants: 10 };
 
@@ -31,6 +34,12 @@ export const ElectionDetailPage: React.FC = () => {
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Position | null>(null);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [admins, setAdmins] = useState<ElectionAdmin[]>([]);
+  const [selectedAdminId, setSelectedAdminId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   // Preset position picker state
   const [presetModalOpen, setPresetModalOpen] = useState(false);
@@ -47,6 +56,30 @@ export const ElectionDetailPage: React.FC = () => {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    adminService.getAll()
+      .then((res) => setAdmins(res.admins.filter((a) => a.isActive)))
+      .catch(() => {});
+  }, [isSuperAdmin]);
+
+  const openAssign = () => { setSelectedAdminId(election?.admin?.id || ''); setAssignModalOpen(true); };
+
+  const handleAssign = async () => {
+    if (!id) return;
+    setAssigning(true);
+    try {
+      await electionService.update(id, { adminId: selectedAdminId || null } as any);
+      toast.success('Election admin updated');
+      setAssignModalOpen(false);
+      load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   const openCreate = () => { setEditing(null); setForm(emptyForm); setModalOpen(true); };
   const openEdit = (p: Position) => {
@@ -198,7 +231,17 @@ export const ElectionDetailPage: React.FC = () => {
         </div>
         <div className="stat-card">
           <div className="stat-icon bg-amber-100 text-amber-700"><Icons.User className="w-5 h-5" /></div>
-          <div><p className="text-sm text-slate-500">Admin</p><p className="text-sm font-semibold truncate">{election.admin ? `${election.admin.firstName} ${election.admin.lastName}` : 'Unassigned'}</p></div>
+          <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm text-slate-500">Admin</p>
+              <p className="text-sm font-semibold truncate">{election.admin ? `${election.admin.firstName} ${election.admin.lastName}` : 'Unassigned'}</p>
+            </div>
+            {isSuperAdmin && (
+              <button onClick={openAssign} className="btn-ghost btn-sm shrink-0" title="Assign election admin">
+                <Icons.Edit className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -269,6 +312,7 @@ export const ElectionDetailPage: React.FC = () => {
         )}
       </div>
 
+      {/* Add / Edit position modal */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -374,6 +418,34 @@ export const ElectionDetailPage: React.FC = () => {
         </div>
       </Modal>
 
+      {/* Assign admin modal */}
+      <Modal
+        isOpen={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        title="Assign Election Admin"
+        footer={
+          <>
+            <button className="btn-secondary" onClick={() => setAssignModalOpen(false)}>Cancel</button>
+            <Button onClick={handleAssign} isLoading={assigning}>Save</Button>
+          </>
+        }
+      >
+        <label className="text-sm text-slate-600 mb-1 block">Election Admin</label>
+        <select
+          className="input"
+          value={selectedAdminId}
+          onChange={(e) => setSelectedAdminId(e.target.value)}
+        >
+          <option value="">Unassigned</option>
+          {admins.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.firstName} {a.lastName}
+            </option>
+          ))}
+        </select>
+      </Modal>
+
+      {/* Delete position confirmation — single instance */}
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

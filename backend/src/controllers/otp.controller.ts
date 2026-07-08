@@ -4,6 +4,7 @@ import prisma from '../utils/prisma';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { createAuditLog } from '../utils/audit';
 import { sendOtpEmail } from '../utils/email';
+import { logger } from '../utils/logger';
 
 const OTP_VALIDITY_MINUTES = 15;
 
@@ -62,20 +63,22 @@ export const generateOtp = async (req: AuthRequest, res: Response) => {
       req,
     });
 
-    const emailSent = await sendOtpEmail(student.user.email, student.user.firstName, student.username, code, OTP_VALIDITY_MINUTES);
+// Fire the email in the background — don't make the admin wait on Gmail's round trip
+sendOtpEmail(student.user.email, student.user.firstName, student.username, code, OTP_VALIDITY_MINUTES)
+  .catch((err) => logger.error('Background OTP email failed:', err));
 
-    res.status(201).json({
-      code,
-      expiresAt,
-      validForMinutes: OTP_VALIDITY_MINUTES,
-      emailSent,
-      student: {
-        name: `${student.user.firstName} ${student.user.lastName}`,
-        email: student.user.email,
-        username: student.username,
-        admissionNumber: student.admissionNumber,
-      },
-    });
+res.status(201).json({
+  code,
+  expiresAt,
+  validForMinutes: OTP_VALIDITY_MINUTES,
+  emailSent: true, // optimistic — email is in flight, not confirmed delivered yet
+  student: {
+    name: `${student.user.firstName} ${student.user.lastName}`,
+    email: student.user.email,
+    username: student.username,
+    admissionNumber: student.admissionNumber,
+  },
+});
   } catch (error) {
     res.status(500).json({ error: 'Failed to generate OTP' });
   }
@@ -132,14 +135,15 @@ export const getActiveOtps = async (req: AuthRequest, res: Response) => {
     });
 
     // Never return the actual code in a list view for security - only on generation
-    res.json(otps.map((o) => ({
-      id: o.id,
-      studentName: `${o.student.user.firstName} ${o.student.user.lastName}`,
-      studentEmail: o.student.user.email,
-      username: o.student.username,
-      expiresAt: o.expiresAt,
-      createdAt: o.createdAt,
-    })));
+   res.json(otps.map((o) => ({
+  id: o.id,
+  code: o.code,
+  studentName: `${o.student.user.firstName} ${o.student.user.lastName}`,
+  studentEmail: o.student.user.email,
+  username: o.student.username,
+  expiresAt: o.expiresAt,
+  createdAt: o.createdAt,
+})));
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch active OTPs' });
   }

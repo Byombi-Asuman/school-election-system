@@ -7,15 +7,19 @@ export const candidateService = {
 
   getOne: (id: string) => api.get<Candidate>(`/candidates/${id}`).then((r) => r.data),
 
-  register: (formData: FormData) =>
-    api.post<Candidate>('/candidates', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data),
+  register: (data: { electionId: string; positionId: string; studentId: string; manifesto: string; photo?: string | null }) =>
+  api.post<Candidate>('/candidates', data).then((r) => r.data),
 
-  update: (id: string, formData: FormData) =>
-    api.put<Candidate>(`/candidates/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then((r) => r.data),
+  update: (id: string, data: { manifesto?: string; photo?: string }) =>
+  api.put<Candidate>(`/candidates/${id}`, data).then((r) => r.data),
+
+  uploadPhoto: (file: File) => {
+  const fd = new FormData();
+  fd.append('photo', file);
+  return api.post<{ url: string }>('/candidates/upload-photo', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then((r) => r.data.url);
+},
 
   approve: (id: string) => api.patch<Candidate>(`/candidates/${id}/approve`).then((r) => r.data),
 

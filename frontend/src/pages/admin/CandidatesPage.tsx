@@ -15,6 +15,8 @@ import toast from 'react-hot-toast';
 
 const UPLOADS_URL = process.env.REACT_APP_UPLOADS_URL || 'http://localhost:5000';
 
+
+
 export const CandidatesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const electionIdFilter = searchParams.get('electionId') || '';
@@ -28,7 +30,8 @@ export const CandidatesPage: React.FC = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ electionId: electionIdFilter, positionId: '', studentId: '', manifesto: '' });
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [rejectTarget, setRejectTarget] = useState<Candidate | null>(null);
@@ -60,32 +63,32 @@ export const CandidatesPage: React.FC = () => {
   }, [form.electionId]);
 
   const openCreate = () => {
-    setForm({ electionId: electionIdFilter, positionId: '', studentId: '', manifesto: '' });
-    setPhotoFile(null);
-    setModalOpen(true);
-  };
+  setForm({ electionId: electionIdFilter, positionId: '', studentId: '', manifesto: '' });
+  setPhotoUrl(null);
+  setModalOpen(true);
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.electionId || !form.positionId || !form.studentId) return toast.error('Please fill all required fields');
-    setSubmitting(true);
-    try {
-      const fd = new FormData();
-      fd.append('electionId', form.electionId);
-      fd.append('positionId', form.positionId);
-      fd.append('studentId', form.studentId);
-      fd.append('manifesto', form.manifesto);
-      if (photoFile) fd.append('photo', photoFile);
-      await candidateService.register(fd);
-      toast.success('Candidate registered successfully');
-      setModalOpen(false);
-      load();
-    } catch (err) {
-      toast.error(getErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  e.preventDefault();
+  if (!form.electionId || !form.positionId || !form.studentId) return toast.error('Please fill all required fields');
+  setSubmitting(true);
+  try {
+    await candidateService.register({
+      electionId: form.electionId,
+      positionId: form.positionId,
+      studentId: form.studentId,
+      manifesto: form.manifesto,
+      photo: photoUrl,
+    });
+    toast.success('Candidate registered successfully');
+    setModalOpen(false);
+    load();
+  } catch (err) {
+    toast.error(getErrorMessage(err));
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleApprove = async (c: Candidate) => {
     try {
@@ -167,7 +170,7 @@ export const CandidatesPage: React.FC = () => {
               <div className="flex items-start gap-3">
                 <div className="w-14 h-14 rounded-xl bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                   {c.photo ? (
-                    <img src={`${UPLOADS_URL}${c.photo}`} alt="" className="w-full h-full object-cover" />
+                    <img src={c.photo?.startsWith('http') ? c.photo : `${UPLOADS_URL}${c.photo}`} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <Icons.User className="w-6 h-6 text-slate-400" />
                   )}
@@ -257,9 +260,32 @@ export const CandidatesPage: React.FC = () => {
             placeholder="Candidate's manifesto / pledge to voters"
           />
           <div className="form-group">
-            <label className="label">Candidate Photo</label>
-            <input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} className="input" />
-          </div>
+  <label className="label">Candidate Photo</label>
+  <input
+    type="file"
+    accept="image/*"
+    disabled={photoUploading}
+    onChange={async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setPhotoUploading(true);
+      try {
+        const url = await candidateService.uploadPhoto(file);
+        setPhotoUrl(url);
+        toast.success('Photo uploaded');
+      } catch (err) {
+        toast.error(getErrorMessage(err));
+      } finally {
+        setPhotoUploading(false);
+      }
+    }}
+    className="input"
+  />
+  {photoUploading && <p className="text-xs text-slate-500 mt-1">Uploading photo…</p>}
+  {photoUrl && !photoUploading && (
+    <img src={photoUrl} alt="Preview" className="w-16 h-16 rounded-lg object-cover mt-2" />
+  )}
+</div>
         </form>
       </Modal>
 
@@ -288,7 +314,7 @@ export const CandidatesPage: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center">
                 {viewCandidate.photo ? (
-                  <img src={`${UPLOADS_URL}${viewCandidate.photo}`} alt="" className="w-full h-full object-cover" />
+                 <img src={viewCandidate.photo?.startsWith('http') ? viewCandidate.photo : `${UPLOADS_URL}${viewCandidate.photo}`} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <Icons.User className="w-7 h-7 text-slate-400" />
                 )}

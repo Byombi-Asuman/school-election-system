@@ -193,11 +193,11 @@ export interface OtpGenerateResponse {
   code: string;
   expiresAt: string;
   validForMinutes: number;
-  emailSent: boolean;
   student: {
+    id: string;
     name: string;
     email: string;
-    username: string;
+    class: string;
     admissionNumber: string;
   };
 }
@@ -207,7 +207,7 @@ export interface ActiveOtp {
   code: string;
   studentName: string;
   studentEmail: string;
-  username: string;
+  class: string;
   expiresAt: string;
   createdAt: string;
 }

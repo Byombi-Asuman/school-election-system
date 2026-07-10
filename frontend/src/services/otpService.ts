@@ -2,8 +2,8 @@ import api from './api';
 import { OtpGenerateResponse, ActiveOtp } from '../types';
 
 export const otpService = {
-  generate: (username: string) =>
-    api.post<OtpGenerateResponse>('/otp/generate', { username }).then((r) => r.data),
+  generate: (studentId: string) =>
+    api.post<OtpGenerateResponse>('/otp/generate', { studentId }).then((r) => r.data),
 
   getActive: () => api.get<ActiveOtp[]>('/otp/active').then((r) => r.data),
 

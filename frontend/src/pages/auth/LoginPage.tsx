@@ -21,9 +21,8 @@ export const LoginPage: React.FC = () => {
   const [staffLoading, setStaffLoading] = useState(false);
 
   // Student form state
-  const [username, setUsername] = useState('');
-  const [otp, setOtp] = useState('');
-  const [studentErrors, setStudentErrors] = useState<{ username?: string; otp?: string }>({});
+  const [token, setToken] = useState('');
+  const [studentErrors, setStudentErrors] = useState<{ token?: string }>({});
   const [studentLoading, setStudentLoading] = useState(false);
 
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -61,14 +60,13 @@ export const LoginPage: React.FC = () => {
   const handleStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: typeof studentErrors = {};
-    if (!username) errs.username = 'Username is required';
-    if (!otp) errs.otp = 'Enter the OTP given to you by your administrator';
+    if (!token) errs.token = 'Enter the token given to you by your administrator';
     setStudentErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
     setStudentLoading(true);
     try {
-      const data = await authService.studentLogin(username.trim(), otp.trim());
+      const data = await authService.studentLogin(token.trim());
       setAuth(data.user, data.accessToken, data.refreshToken);
       toast.success(`Welcome, ${data.user.firstName}!`);
       goAfterLogin(data.user.role);
@@ -100,7 +98,7 @@ export const LoginPage: React.FC = () => {
               Democracy starts in the classroom.
             </h1>
             <p className="text-primary-100 text-lg leading-relaxed">
-              A secure, transparent platform for running students elections 
+              A secure, transparent platform for running student elections
               from candidate registration to live results.
             </p>
             <div className="mt-8 flex gap-8">
@@ -109,7 +107,7 @@ export const LoginPage: React.FC = () => {
                 <p className="text-sm text-primary-200">Secret Ballot</p>
               </div>
               <div>
-                <p className="text-2xl font-bold font-display">OTP</p>
+                <p className="text-2xl font-bold font-display">Token</p>
                 <p className="text-sm text-primary-200">Verified Login</p>
               </div>
               <div>
@@ -157,31 +155,22 @@ export const LoginPage: React.FC = () => {
             <>
               <h2 className="font-display text-2xl font-bold text-slate-900">Student Login</h2>
               <p className="text-sm text-slate-500 mt-1 mb-8">
-                Log in with your username and the one-time password from your election administrator.
+                Enter the token given to you by your election administrator. That's all you need — no username or password.
               </p>
 
               <form onSubmit={handleStudentSubmit} noValidate className="space-y-4">
                 <Input
-                  label="Username"
-                  type="text"
-                  autoComplete="username"
-                  placeholder="e.g. jameswilson@lvk"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  error={studentErrors.username}
-                  required
-                />
-                <Input
-                  label="One-Time Password"
+                  label="Login Token"
                   type="text"
                   inputMode="numeric"
-                  maxLength={4}
-                  placeholder="4-digit code"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  error={studentErrors.otp}
+                  maxLength={6}
+                  placeholder="6-digit token"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  error={studentErrors.token}
                   className="text-center text-xl font-mono tracking-widest"
                   required
+                  autoFocus
                 />
                 <Button type="submit" variant="primary" size="lg" className="w-full mt-2" isLoading={studentLoading}>
                   Sign in
@@ -191,7 +180,7 @@ export const LoginPage: React.FC = () => {
               <div className="mt-6 p-3 rounded-lg bg-slate-100 border border-slate-200 flex items-start gap-2">
                 <Icons.Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-500">
-                  Don't have an OTP? Ask your Election Administrator to generate one for you —
+                  Don't have a token? Ask your Super Admin or Election Administrator to generate one for you —
                   it's valid for 15 minutes and can only be used once.
                 </p>
               </div>
@@ -206,7 +195,7 @@ export const LoginPage: React.FC = () => {
                   label="Email address"
                   type="email"
                   autoComplete="email"
-                  placeholder="you@school.com"
+                  placeholder="you@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   error={staffErrors.email}

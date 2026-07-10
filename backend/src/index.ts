@@ -48,23 +48,28 @@ app.use(cors({
 }));
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
-  max: parseInt(process.env.RATE_LIMIT_MAX || '100'),
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { error: 'Too many login attempts, please try again later.' },
+  keyGenerator: (req) => `${req.ip}:${(req.body?.email || '').toLowerCase()}`,
 });
 
-app.use('/api/', limiter);
+// Student token login: the token itself is a one-time, 15-minute, 6-digit secret
+// (1,000,000 possibilities) — that's the primary defense here, not IP limiting,
+// since the token being guessed changes every attempt and IP is shared school-wide.
+// This limiter just guards against a genuinely abusive volume of attempts from one
+// connection, sized generously enough that normal shared-WiFi login traffic during
+// an election isn't affected.
+const studentLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: 'Too many login attempts from this network, please try again shortly.' },
+});
+
 app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/student-login', authLimiter);
+app.use('/api/auth/student-login', studentLoginLimiter);
+
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

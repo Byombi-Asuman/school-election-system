@@ -13,8 +13,7 @@ router.post('/login', [
 ], authController.login);
 
 router.post('/student-login', [
-  body('username').notEmpty().trim(),
-  body('otp').notEmpty().trim(),
+  body('token').notEmpty().trim(),
   validate,
 ], authController.studentLogin);
 

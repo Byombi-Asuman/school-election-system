@@ -242,4 +242,5 @@ model VotingOtp {
   student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId, code])
+  @@index([code, used, expiresAt])
 }

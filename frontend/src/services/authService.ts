@@ -11,8 +11,8 @@ export const authService = {
   login: (email: string, password: string) =>
     api.post<LoginResponse>('/auth/login', { email, password }).then((r) => r.data),
 
-  studentLogin: (username: string, otp: string) =>
-    api.post<LoginResponse>('/auth/student-login', { username, otp }).then((r) => r.data),
+  studentLogin: (token: string) =>
+    api.post<LoginResponse>('/auth/student-login', { token }).then((r) => r.data),
 
   logout: (refreshToken: string | null) =>
     api.post('/auth/logout', { refreshToken }).then((r) => r.data),

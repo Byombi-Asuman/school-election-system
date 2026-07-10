@@ -77,40 +77,35 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+
 export const studentLogin = async (req: Request, res: Response) => {
   try {
-    const { username, otp } = req.body;
+    const { token } = req.body;
+    const code = String(token).trim();
 
-    const student = await prisma.student.findUnique({
-      where: { username: String(username).trim() },
-      include: { user: true },
+    // The token alone identifies the student — no username needed
+    const otpRecord = await prisma.votingOtp.findFirst({
+      where: { code, used: false, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
+      include: { student: { include: { user: true } } },
     });
 
-    if (!student || !student.user.isActive) {
-      await createAuditLog({ action: 'LOGIN', details: { username, success: false, reason: 'unknown_username' }, req });
-      return res.status(401).json({ error: 'Invalid username or OTP' });
+    if (!otpRecord) {
+      await createAuditLog({ action: 'LOGIN', details: { success: false, reason: 'invalid_token' }, req });
+      return res.status(401).json({ error: 'Invalid or expired token. Please ask your election administrator for a new one.' });
+    }
+
+    const student = otpRecord.student;
+
+    if (!student.user.isActive) {
+      return res.status(401).json({ error: 'This account is inactive' });
     }
 
     if (!student.isEligible) {
       return res.status(403).json({ error: 'This account is not currently eligible to vote and cannot log in.' });
     }
 
-    const otpRecord = await prisma.votingOtp.findFirst({
-      where: {
-        studentId: student.id,
-        code: String(otp).trim(),
-        used: false,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!otpRecord) {
-      await createAuditLog({ userId: student.userId, action: 'LOGIN', details: { username, success: false, reason: 'invalid_otp' }, req });
-      return res.status(401).json({ error: 'Invalid or expired OTP. Please request a new one from your election administrator.' });
-    }
-
-    // Consume the OTP immediately — it is a one-time login credential
+    // Consume the token immediately — it is a one-time login credential
     await prisma.votingOtp.update({
       where: { id: otpRecord.id },
       data: { used: true, usedAt: new Date() },
@@ -138,7 +133,7 @@ export const studentLogin = async (req: Request, res: Response) => {
     await createAuditLog({
       userId: student.user.id,
       action: 'LOGIN',
-      details: { username, success: true, via: 'otp' },
+      details: { admissionNumber: student.admissionNumber, success: true, via: 'token' },
       req,
     });
 
@@ -158,7 +153,6 @@ export const studentLogin = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Login failed' });
   }
 };
-
 export const logout = async (req: AuthRequest, res: Response) => {
   try {
     const { refreshToken } = req.body;

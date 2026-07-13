@@ -102,11 +102,11 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [user, resetIdleTimer, doLogout]);
 
   // (Re)start the timer whenever the pause flag or user changes.
+  // (Re)start the timer whenever the pause flag or user changes.
   useEffect(() => {
     resetIdleTimer();
     return clearAllTimers;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paused, user?.id]);
+  }, [paused, user?.id, resetIdleTimer, clearAllTimers]);
 
   if (!user) return <>{children}</>;
 

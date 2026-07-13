@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Icons } from '../../components/ui/Icons';
+import { HeroSlider } from '../../components/HeroSlider';
 import { Input } from '../../components/ui/FormControls';
 import { Button } from '../../components/ui/Button';
 import { authService } from '../../services/authService';
@@ -81,6 +82,9 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen flex bg-slate-50">
       {/* Left branding panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-700 via-primary-800 to-slate-900 relative overflow-hidden">
+        <HeroSlider />
+        {/* Darkening overlay so the branding text stays readable over any slide */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/80 via-primary-900/70 to-slate-900/85" />
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
           backgroundSize: '32px 32px',

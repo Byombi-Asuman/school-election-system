@@ -115,12 +115,19 @@ export interface School {
   id: string;
   name: string;
   logo?: string | null;
+  heroImages?: string[];
   address?: string | null;
   phone?: string | null;
   email?: string | null;
   website?: string | null;
   motto?: string | null;
   rules?: string | null;
+}
+
+export interface PublicSchoolSettings {
+  name: string;
+  logo: string | null;
+  heroImages: string[];
 }
 
 export interface DashboardStats {

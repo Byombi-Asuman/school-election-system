@@ -52,6 +52,7 @@ model School {
   id          String   @id @default(uuid())
   name        String
   logo        String?
+  heroImages  String[] @default([])
   address     String?
   phone       String?
   email       String?

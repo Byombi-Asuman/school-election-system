@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
+import { IdleTimeoutProvider } from './components/IdleTimeoutProvider';
+import { SplashScreen } from './components/SplashScreen';
 
 // Auth pages
 import LoginPage from './pages/auth/LoginPage';

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import { verifyAccessToken } from '../utils/jwt';
 import prisma from '../utils/prisma';
 import { Role } from '@prisma/client';
@@ -33,11 +34,28 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     req.user = user;
-    next();
+    perUserLimiter(req, res, next);
   } catch (error) {
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
+
+// Rate limits per logged-in user rather than per IP. Many schools have every
+// student and admin sharing one public IP address over the school's WiFi, which
+// makes IP-based limiting see them all as a single client — one busy user could
+// exhaust the shared quota and lock everyone else out. Keying by req.user.id
+// (available here, right after the JWT is verified above) gives each person their
+// own independent budget regardless of how many people share the network.
+// Invoked from within authenticate() above, so every existing route using
+// `authenticate` gets per-user limiting automatically with no other changes needed.
+const perUserLimiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
+  max: parseInt(process.env.RATE_LIMIT_MAX || '500'),
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: AuthRequest) => req.user?.id || req.ip || 'unknown',
+});
 
 export const authorize = (...roles: Role[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {

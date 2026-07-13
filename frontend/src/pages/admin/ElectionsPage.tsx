@@ -12,6 +12,7 @@ import { getErrorMessage } from '../../services/api';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../store/authStore';
+import { datetimeLocalToUgandaISO, isoToUgandaDatetimeLocal, formatUgandaDate } from '../../utils/timezone';
 
 const emptyForm = { title: '', description: '', startDate: '', endDate: '', adminId: '' };
 
@@ -70,8 +71,8 @@ export const ElectionsPage: React.FC = () => {
     setForm({
       title: e.title,
       description: e.description || '',
-      startDate: e.startDate.slice(0, 16),
-      endDate: e.endDate.slice(0, 16),
+      startDate: isoToUgandaDatetimeLocal(e.startDate),
+      endDate: isoToUgandaDatetimeLocal(e.endDate),
       adminId: e.admin?.id || '',
     });
     setModalOpen(true);
@@ -81,6 +82,12 @@ export const ElectionsPage: React.FC = () => {
     e.preventDefault();
     if (!form.title || !form.startDate || !form.endDate) return toast.error('Please fill all required fields');
     if (new Date(form.endDate) <= new Date(form.startDate)) return toast.error('End date must be after start date');
+
+    const payload = {
+    ...form,
+    startDate: datetimeLocalToUgandaISO(form.startDate),
+    endDate: datetimeLocalToUgandaISO(form.endDate),
+  }; 
 
     setSubmitting(true);
     try {
@@ -191,9 +198,9 @@ export const ElectionsPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-4">
-                <span>{format(new Date(election.startDate), 'MMM d, yyyy')}</span>
+                <span>{formatUgandaDate(election.startDate)}</span>
                 <span>→</span>
-                <span>{format(new Date(election.endDate), 'MMM d, yyyy')}</span>
+                <span>{formatUgandaDate(election.endDate)}</span>
               </div>
 
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">

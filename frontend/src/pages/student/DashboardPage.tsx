@@ -6,6 +6,7 @@ import { Icons } from '../../components/ui/Icons';
 import { dashboardService } from '../../services/dashboardService';
 import { getErrorMessage } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { formatUganda } from '../../utils/timezone';
 import toast from 'react-hot-toast';
 
 export const StudentDashboardPage: React.FC = () => {
@@ -127,7 +128,7 @@ export const StudentDashboardPage: React.FC = () => {
                   <tr key={v.id}>
                     <td>{v.election.title}</td>
                     <td>{v.position.title}</td>
-                    <td className="text-xs text-slate-500">{new Date(v.castedAt).toLocaleString()}</td>
+                    <td className="text-xs text-slate-500">{formatUganda(v.castedAt)}</td>
                   </tr>
                 ))}
               </tbody>

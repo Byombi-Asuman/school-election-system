@@ -7,6 +7,7 @@ import { Icons } from '../../components/ui/Icons';
 import { dashboardService } from '../../services/dashboardService';
 import { voteService } from '../../services/voteService';
 import { getErrorMessage } from '../../services/api';
+import { useIdleTimeoutStore } from '../../store/idleTimeoutStore';
 import toast from 'react-hot-toast';
 
 const UPLOADS_URL = process.env.REACT_APP_UPLOADS_URL || 'http://localhost:5000';
@@ -29,6 +30,17 @@ interface PositionBallot {
 }
 
 export const VotingPage: React.FC = () => {
+   const setIdlePaused = useIdleTimeoutStore((s) => s.setPaused);
+
+  // Suspend the inactivity auto-logout entirely while a student is on the actual
+  // voting page — a moment's hesitation deciding between candidates should never
+  // risk losing a half-completed ballot. The timer resumes normally the instant
+  // they navigate away, whether or not they finished voting.
+  useEffect(() => {
+    setIdlePaused(true);
+    return () => setIdlePaused(false);
+  }, [setIdlePaused]);
+  
   const [elections, setElections] = useState<any[]>([]);
   const [activeElection, setActiveElection] = useState<any>(null);
   const [loading, setLoading] = useState(true);

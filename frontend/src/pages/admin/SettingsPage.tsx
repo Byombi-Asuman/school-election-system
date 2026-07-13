@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { PageLoader } from '../../components/ui';
 import { Button } from '../../components/ui/Button';
+import { HeroImagesSettings } from '../../components/admin/HeroImagesSettings';
 import { Input, Textarea } from '../../components/ui/FormControls';
 import { Icons } from '../../components/ui/Icons';
 import { settingsService } from '../../services/settingsService';
@@ -112,6 +113,7 @@ export const SettingsPage: React.FC = () => {
 
         <Button type="submit" isLoading={saving}>Save Settings</Button>
       </form>
+      <HeroImagesSettings />
     </DashboardLayout>
   );
 };

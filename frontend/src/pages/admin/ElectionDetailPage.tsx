@@ -12,6 +12,7 @@ import { useAuthStore } from '../../store/authStore'; // ⬅ added — adjust pa
 import { Election, Position } from '../../types'; // ⬅ added ElectionAdmin
 import { getErrorMessage } from '../../services/api';
 import { PRESET_POSITIONS } from '../../utils/presetPositions';
+import { format } from 'date-fns';
 import { formatUganda } from '../../utils/timezone';
 import toast from 'react-hot-toast';
 import { Select } from '../../components/ui/FormControls';

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
+import { useState, useEffect } from 'react';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { IdleTimeoutProvider } from './components/IdleTimeoutProvider';
 import { SplashScreen } from './components/SplashScreen';
@@ -38,9 +39,29 @@ const HomeRedirect: React.FC = () => {
   return <Navigate to={user.role === 'STUDENT' ? '/student/dashboard' : '/admin/dashboard'} replace />;
 };
 
+const SPLASH_MIN_DURATION_MS = 700;
+const SPLASH_FADE_MS = 300;
+
 const App: React.FC = () => {
+  // Fixed minimum display time so the splash never flashes by too fast to
+  // register on a fast connection — same trick Instagram/Twitter use. It's a
+  // brief branded moment on initial load, then fades into the real app.
+  const [splashVisible, setSplashVisible] = useState(true);
+  const [splashFadingOut, setSplashFadingOut] = useState(false);
+
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setSplashFadingOut(true), SPLASH_MIN_DURATION_MS);
+    const removeTimer = setTimeout(() => setSplashVisible(false), SPLASH_MIN_DURATION_MS + SPLASH_FADE_MS);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
+      {splashVisible && <SplashScreen fadingOut={splashFadingOut} />}
+      <IdleTimeoutProvider>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -80,6 +101,7 @@ const App: React.FC = () => {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </IdleTimeoutProvider>
     </BrowserRouter>
   );
 };

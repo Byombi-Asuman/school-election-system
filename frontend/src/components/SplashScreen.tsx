@@ -7,11 +7,19 @@ export const SplashScreen: React.FC<{ fadingOut: boolean }> = ({ fadingOut }) =>
       fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
     }`}
   >
-    <div className="flex flex-col items-center gap-4 animate-pulse">
-      <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div
+        className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center animate-splash-in animate-splash-glow"
+        style={{ animationDelay: '0ms' }}
+      >
         <Icons.Shield className="w-9 h-9 text-white" />
       </div>
-      <span className="font-display font-bold text-lg text-white tracking-wide">School Elections</span>
+      <span
+        className="font-display font-bold text-lg text-white tracking-wide animate-splash-in opacity-0"
+        style={{ animationDelay: '150ms' }}
+      >
+        School Elections
+      </span>
     </div>
   </div>
 );

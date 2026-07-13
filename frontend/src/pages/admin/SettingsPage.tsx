@@ -10,7 +10,7 @@ import { School } from '../../types';
 import { getErrorMessage } from '../../services/api';
 import toast from 'react-hot-toast';
 
-const UPLOADS_URL = process.env.REACT_APP_UPLOADS_URL || 'https://generous-simplicity-production-5b4a.up.railway.app';
+const UPLOADS_URL = process.env.REACT_APP_UPLOADS_URL || 'http://localhost:5000';
 
 export const SettingsPage: React.FC = () => {
   const [school, setSchool] = useState<School | null>(null);

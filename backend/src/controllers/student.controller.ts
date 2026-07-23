@@ -192,6 +192,37 @@ export const toggleEligibility = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Soft-delete / reactivate — the default, safe way to "remove" a student.
+// Deactivated students are hidden from normal lists and can't be issued a
+// login token, but their account and any votes they've already cast are
+// fully preserved, unlike a hard delete.
+export const toggleActive = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const student = await prisma.student.findUnique({ where: { id }, include: { user: true } });
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    const updated = await prisma.user.update({
+      where: { id: student.userId },
+      data: { isActive: !student.user.isActive },
+      select: { isActive: true },
+    });
+
+    await createAuditLog({
+      userId: req.user!.id,
+      action: 'UPDATE',
+      entity: 'Student',
+      entityId: id,
+      details: { action: updated.isActive ? 'reactivated' : 'deactivated' },
+      req,
+    });
+
+    res.json({ isActive: updated.isActive });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update student status' });
+  }
+};
+
 export const importStudents = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -216,7 +247,8 @@ export const importStudents = async (req: AuthRequest, res: Response) => {
 
     const results = { created: 0, skipped: 0, errors: [] as string[] };
 
-    for (const row of students) {
+    for (const [index, row] of students.entries()) {
+      const rowNum = index + 2; // +2: 1-indexed, plus header row
       try {
         const email = (row.email || row.Email || '').toLowerCase().trim();
         const admissionNumber = (row.admissionNumber || row.admission_number || row['Admission Number'] || '').trim();
@@ -225,7 +257,9 @@ export const importStudents = async (req: AuthRequest, res: Response) => {
         const cls = (row.class || row.Class || '').trim();
 
         if (!email || !admissionNumber || !firstName || !lastName) {
-          results.errors.push(`Row missing required fields: ${JSON.stringify(row)}`);
+          const missing = [!email && 'email', !admissionNumber && 'admissionNumber', !firstName && 'firstName', !lastName && 'lastName']
+            .filter(Boolean).join(', ');
+          results.errors.push(`Row ${rowNum} skipped: missing required field(s) — ${missing}`);
           results.skipped++;
           continue;
         }
@@ -257,9 +291,15 @@ export const importStudents = async (req: AuthRequest, res: Response) => {
         results.created++;
       } catch (err: any) {
         if (err.code === 'P2002') {
+          const field = err.meta?.target?.[0] || 'field';
+          const email = (row.email || row.Email || '').trim();
+          const admissionNumber = (row.admissionNumber || row.admission_number || row['Admission Number'] || '').trim();
+          const identifier = field === 'email' ? email : field === 'admissionNumber' ? admissionNumber : email || admissionNumber;
+          results.errors.push(`Row ${rowNum} skipped: ${field} '${identifier}' already exists`);
           results.skipped++;
         } else {
-          results.errors.push(`Row error: ${err.message}`);
+          results.errors.push(`Row ${rowNum} skipped: ${err.message}`);
+          results.skipped++;
         }
       }
     }
@@ -287,7 +327,28 @@ export const deleteStudent = async (req: AuthRequest, res: Response) => {
     const student = await prisma.student.findUnique({ where: { id } });
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
+    // Vote rows cascade-delete with their voter, so a hard delete would
+    // silently remove already-cast votes from every election's results —
+    // changing outcomes after the fact with no visible trace beyond an audit
+    // log entry. Block it outright once a student has voted; deactivating
+    // (soft-delete) is always safe and available regardless.
+    const voteCount = await prisma.vote.count({ where: { voterId: id } });
+    if (voteCount > 0) {
+      return res.status(400).json({
+        error: `This student has cast ${voteCount} vote${voteCount > 1 ? 's' : ''}. Deleting them would remove those votes from election results. Deactivate the account instead to preserve vote integrity.`,
+      });
+    }
+
     await prisma.user.delete({ where: { id: student.userId } });
+
+    await createAuditLog({
+      userId: req.user!.id,
+      action: 'DELETE',
+      entity: 'Student',
+      entityId: id,
+      details: { admissionNumber: student.admissionNumber },
+      req,
+    });
 
     res.json({ message: 'Student deleted' });
   } catch (error) {

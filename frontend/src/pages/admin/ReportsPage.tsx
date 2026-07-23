@@ -34,9 +34,14 @@ export const ReportsPage: React.FC = () => {
   const exportCSV = () => {
     if (!data) return;
     let csv = 'Position,Candidate,Votes,Percentage,Winner\n';
-    data.results.forEach((pos) => pos.candidates.forEach((c) => {
-      csv += `"${pos.positionTitle}","${c.name}",${c.voteCount},${c.percentage}%,${c.isWinner ? 'Yes' : 'No'}\n`;
-    }));
+    data.results.forEach((pos) => {
+      pos.candidates.forEach((c) => {
+        csv += `"${pos.positionTitle}","${c.name}",${c.voteCount},${c.percentage}%,${c.isWinner ? 'Yes' : 'No'}\n`;
+      });
+      if (pos.invalidVotes > 0) {
+        csv += `"${pos.positionTitle}","Invalid/Abstained",${pos.invalidVotes},,\n`;
+      }
+    });
     downloadFile(csv, `${data.election.title}_report.csv`, 'text/csv');
   };
 
@@ -44,9 +49,14 @@ export const ReportsPage: React.FC = () => {
     if (!data) return;
     // Simple TSV that Excel opens natively without extra deps
     let tsv = 'Position\tCandidate\tVotes\tPercentage\tWinner\n';
-    data.results.forEach((pos) => pos.candidates.forEach((c) => {
-      tsv += `${pos.positionTitle}\t${c.name}\t${c.voteCount}\t${c.percentage}%\t${c.isWinner ? 'Yes' : 'No'}\n`;
-    }));
+    data.results.forEach((pos) => {
+      pos.candidates.forEach((c) => {
+        tsv += `${pos.positionTitle}\t${c.name}\t${c.voteCount}\t${c.percentage}%\t${c.isWinner ? 'Yes' : 'No'}\n`;
+      });
+      if (pos.invalidVotes > 0) {
+        tsv += `${pos.positionTitle}\tInvalid/Abstained\t${pos.invalidVotes}\t\t\n`;
+      }
+    });
     downloadFile(tsv, `${data.election.title}_report.xls`, 'application/vnd.ms-excel');
   };
 
@@ -146,6 +156,14 @@ export const ReportsPage: React.FC = () => {
                       </td>
                     </tr>
                   ))}
+                  {pos.invalidVotes > 0 && (
+                    <tr className="border-t border-slate-50">
+                      <td className="py-2 italic text-slate-400">Invalid / Abstained</td>
+                      <td className="py-2 italic text-slate-400">{pos.invalidVotes}</td>
+                      <td className="py-2 italic text-slate-400">—</td>
+                      <td className="py-2">—</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

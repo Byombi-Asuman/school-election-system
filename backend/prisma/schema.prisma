@@ -71,6 +71,7 @@ model User {
   lastName          String
   role              Role      @default(STUDENT)
   isActive          Boolean   @default(true)
+  profilePicture    String?
   resetToken        String?
   resetTokenExpiry  DateTime?
   lastLoginAt       DateTime?
@@ -178,7 +179,7 @@ model Vote {
   id          String    @id @default(uuid())
   electionId  String
   positionId  String
-  candidateId String
+  candidateId String?
   voterId     String
   ipAddress   String?
   userAgent   String?
@@ -186,7 +187,7 @@ model Vote {
 
   election    Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
   position    Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
-  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   voter       Student   @relation(fields: [voterId], references: [id], onDelete: Cascade)
 
   @@unique([electionId, positionId, voterId])

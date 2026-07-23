@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import * as authController from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validation.middleware';
+import { uploadPhoto } from '../middleware/upload.middleware';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.post('/student-login', [
 router.post('/logout', authenticate, authController.logout);
 router.post('/refresh', [body('refreshToken').notEmpty(), validate], authController.refresh);
 router.get('/me', authenticate, authController.me);
+router.put('/me', authenticate, uploadPhoto.single('profilePicture'), authController.updateProfile);
 
 router.post('/forgot-password', [body('email').isEmail(), validate], authController.forgotPassword);
 router.post('/reset-password', [

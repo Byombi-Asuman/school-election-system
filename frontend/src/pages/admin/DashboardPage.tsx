@@ -73,7 +73,7 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <StatCard
           label="Registered Voters"
           value={stats.totalStudents}
@@ -94,6 +94,13 @@ export const AdminDashboardPage: React.FC = () => {
           sub="Across all elections"
           color="bg-emerald-100 text-emerald-700"
           icon={<Icons.Vote className="w-6 h-6" />}
+        />
+        <StatCard
+          label="Invalid Votes"
+          value={stats.invalidVotes}
+          sub={stats.openElections > 0 ? `${stats.invalidVotePercent}% of votes in open elections` : 'No open elections'}
+          color="bg-rose-100 text-rose-700"
+          icon={<Icons.X className="w-6 h-6" />}
         />
         <StatCard
           label="Open Elections"

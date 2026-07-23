@@ -69,6 +69,7 @@ export const login = async (req: Request, res: Response) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        profilePicture: user.profilePicture,
         student: user.student,
       },
     });
@@ -146,6 +147,7 @@ export const studentLogin = async (req: Request, res: Response) => {
         firstName: student.user.firstName,
         lastName: student.user.lastName,
         role: student.user.role,
+        profilePicture: student.user.profilePicture,
         student: { ...student, user: undefined },
       },
     });
@@ -214,7 +216,7 @@ export const me = async (req: AuthRequest, res: Response) => {
       where: { id: req.user!.id },
       select: {
         id: true, email: true, firstName: true, lastName: true,
-        role: true, lastLoginAt: true, createdAt: true,
+        role: true, lastLoginAt: true, createdAt: true, profilePicture: true,
         student: true,
       },
     });
@@ -223,6 +225,49 @@ export const me = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
+
+// Self-service profile update for Super Admins and Election Admins — their own
+// name, email, and profile picture. Deliberately separate from the school-wide
+// Settings page, which stays Super-Admin-only and covers different concerns
+// (school name, logo, homepage slider, rules) rather than a person's own account.
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    const { firstName, lastName, email } = req.body;
+    const profilePicture = req.file ? (req.file as any).path : undefined;
+
+    if (email) {
+      const existing = await prisma.user.findUnique({ where: { email: String(email).toLowerCase() } });
+      if (existing && existing.id !== req.user!.id) {
+        return res.status(409).json({ error: 'That email is already in use by another account' });
+      }
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(email && { email: String(email).toLowerCase() }),
+        ...(profilePicture && { profilePicture }),
+      },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, profilePicture: true },
+    });
+
+    await createAuditLog({
+      userId: req.user!.id,
+      action: 'SETTINGS_CHANGE',
+      entity: 'User',
+      entityId: req.user!.id,
+      details: { action: 'profile_updated' },
+      req,
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {

@@ -1,16 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useIdleTimeoutStore } from '../store/idleTimeoutStore';
+import { useActivityStore } from '../store/activityStore';
 import { authService } from '../services/authService';
 import { Icons } from './ui/Icons';
-
-// Students are far more likely to be on shared school-lab computers, and their
-// whole session starts from a one-time token anyway — short idle window.
-// Admins/staff are more likely on personal devices and doing longer work sessions.
-const STUDENT_IDLE_MS = 5 * 60 * 1000; // 5 minutes
-const STUDENT_WARNING_MS = 60 * 1000; // 60 second countdown
-const STAFF_IDLE_MS = 30 * 60 * 1000; // 30 minutes
-const STAFF_WARNING_MS = 120 * 1000; // 120 second countdown
+import { STUDENT_IDLE_MS, STUDENT_WARNING_MS, STAFF_IDLE_MS, STAFF_WARNING_MS } from '../utils/idleThresholds';
 
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'click', 'keydown', 'scroll', 'touchstart'] as const;
 const CHANNEL_NAME = 'school-election-idle-sync';
@@ -20,6 +14,8 @@ type SyncMessage = { type: 'activity' } | { type: 'logout' };
 export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, refreshToken, clearAuth } = useAuthStore();
   const paused = useIdleTimeoutStore((s) => s.paused);
+  const recordActivity = useActivityStore((s) => s.recordActivity);
+  const clearActivity = useActivityStore((s) => s.clear);
 
   const [warningVisible, setWarningVisible] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -43,9 +39,10 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (broadcast) channelRef.current?.postMessage({ type: 'logout' } as SyncMessage);
       authService.logout(refreshToken).catch(() => {});
       clearAuth();
+      clearActivity();
       window.location.href = '/login';
     },
-    [clearAllTimers, clearAuth, refreshToken]
+    [clearAllTimers, clearAuth, clearActivity, refreshToken]
   );
 
   const startWarningCountdown = useCallback(() => {
@@ -73,15 +70,17 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // Explicit "Stay logged in" confirmation — the only thing that dismisses the
   // warning once it's showing. Ambient mouse movement no longer silently extends it.
   const confirmPresence = useCallback(() => {
+    recordActivity();
     channelRef.current?.postMessage({ type: 'activity' } as SyncMessage);
     resetIdleTimer();
-  }, [resetIdleTimer]);
+  }, [resetIdleTimer, recordActivity]);
 
   // Phase 1: before the warning appears, any real activity resets the clock.
   useEffect(() => {
     if (!user) return;
-    const handleActivity = () => {
+   const handleActivity = () => {
       if (warningVisible) return; // phase 2 — only the explicit button counts now
+      recordActivity();
       channelRef.current?.postMessage({ type: 'activity' } as SyncMessage);
       resetIdleTimer();
     };
@@ -104,9 +103,10 @@ export const IdleTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
   // (Re)start the timer whenever the pause flag or user changes.
   // (Re)start the timer whenever the pause flag or user changes.
   useEffect(() => {
+    if (user) recordActivity();
     resetIdleTimer();
     return clearAllTimers;
-  }, [paused, user?.id, resetIdleTimer, clearAllTimers]);
+  }, [paused, user?.id]);
 
   if (!user) return <>{children}</>;
 

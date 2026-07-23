@@ -54,6 +54,9 @@ export const ResultsPage: React.FC = () => {
       pos.candidates.forEach((c) => {
         csv += `"${pos.positionTitle}","${c.name}",${c.voteCount},${c.percentage}%,${c.isWinner ? 'Yes' : 'No'}\n`;
       });
+      if (pos.invalidVotes > 0) {
+        csv += `"${pos.positionTitle}","Invalid/Abstained",${pos.invalidVotes},,\n`;
+      }
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -131,6 +134,7 @@ export const ResultsPage: React.FC = () => {
               <div>
                 <h3 className="font-semibold text-slate-900">{pos.positionTitle}</h3>
                 <p className="text-xs text-slate-500">{pos.totalVotes} total votes · {pos.maxWinners} winner{pos.maxWinners > 1 ? 's' : ''}</p>
+                {pos.invalidVotes > 0 && <> · <span className="text-slate-400">{pos.invalidVotes} invalid/abstained</span></>}
               </div>
               {pos.hasTie && (
                 <span className="badge badge-yellow text-xs flex items-center gap-1">

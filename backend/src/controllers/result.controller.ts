@@ -39,6 +39,10 @@ export const getResults = async (req: AuthRequest, res: Response) => {
           0
         );
 
+        const invalidVotes = await prisma.vote.count({
+          where: { positionId: position.id, candidateId: null },
+        });
+
         const ranked = candidates
           .map(c => ({
             id: c.id,
@@ -80,6 +84,7 @@ export const getResults = async (req: AuthRequest, res: Response) => {
           positionTitle: position.title,
           maxWinners: position.maxWinners,
           totalVotes: totalVotesForPosition,
+          invalidVotes,
           hasTie,
           candidates: ranked.map(c => ({
             ...c,

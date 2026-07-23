@@ -5,6 +5,8 @@ import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/authService';
 import toast from 'react-hot-toast';
 
+const UPLOADS_URL = process.env.REACT_APP_UPLOADS_URL || 'http://localhost:5000';
+
 interface HeaderProps {
   onMenuClick: () => void;
   title?: string;
@@ -51,8 +53,16 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, title }) => {
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center gap-2 p-1.5 pr-3 rounded-full hover:bg-slate-100 transition-colors"
         >
-          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold text-xs">
-            {user?.firstName?.[0]}{user?.lastName?.[0]}
+          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-semibold text-xs overflow-hidden shrink-0">
+            {user?.profilePicture ? (
+              <img
+                src={user.profilePicture.startsWith('http') ? user.profilePicture : `${UPLOADS_URL}${user.profilePicture}`}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <>{user?.firstName?.[0]}{user?.lastName?.[0]}</>
+            )}
           </div>
           <span className="text-sm font-medium text-slate-700 hidden sm:block">{user?.firstName}</span>
           <Icons.ChevronDown className="w-4 h-4 text-slate-400" />
@@ -65,11 +75,11 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick, title }) => {
               <p className="text-xs text-slate-500 truncate">{user?.email}</p>
             </div>
             <button
-              onClick={() => { setMenuOpen(false); navigate(user?.role === 'STUDENT' ? '/student/profile' : '/admin/settings'); }}
+              onClick={() => { setMenuOpen(false); navigate(user?.role === 'STUDENT' ? '/student/profile' : '/admin/account'); }}
               className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
             >
               <Icons.User className="w-4 h-4 text-slate-400" />
-              {user?.role === 'STUDENT' ? 'My Profile' : 'Settings'}
+              {user?.role === 'STUDENT' ? 'My Profile' : 'My Account'}
             </button>
             <button
               onClick={handleLogout}

@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
+import { useActivityStore } from './store/activityStore';
+import { idleThresholdFor } from './utils/idleThresholds';
 import { useState, useEffect } from 'react';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { IdleTimeoutProvider } from './components/IdleTimeoutProvider';
@@ -25,6 +27,7 @@ import AnnouncementsPage from './pages/admin/AnnouncementsPage';
 import AdminsPage from './pages/admin/AdminsPage';
 import AuditLogsPage from './pages/admin/AuditLogsPage';
 import SettingsPage from './pages/admin/SettingsPage';
+import AccountPage from './pages/admin/AccountPage';
 
 // Student pages
 import StudentDashboardPage from './pages/student/DashboardPage';
@@ -50,6 +53,17 @@ const App: React.FC = () => {
   const [splashFadingOut, setSplashFadingOut] = useState(false);
 
   useEffect(() => {
+    
+    const { user, clearAuth } = useAuthStore.getState();
+    const { lastActivityAt, clear: clearActivity } = useActivityStore.getState();
+    if (user && lastActivityAt) {
+      const threshold = idleThresholdFor(user.role);
+      if (Date.now() - lastActivityAt > threshold) {
+        clearAuth();
+        clearActivity();
+      }
+    }
+
     const fadeTimer = setTimeout(() => setSplashFadingOut(true), SPLASH_MIN_DURATION_MS);
     const removeTimer = setTimeout(() => setSplashVisible(false), SPLASH_MIN_DURATION_MS + SPLASH_FADE_MS);
     return () => {
@@ -89,8 +103,9 @@ const App: React.FC = () => {
         <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ELECTION_ADMIN']}><ReportsPage /></ProtectedRoute>} />
         <Route path="/admin/announcements" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ELECTION_ADMIN']}><AnnouncementsPage /></ProtectedRoute>} />
         <Route path="/admin/admins" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminsPage /></ProtectedRoute>} />
-        <Route path="/admin/audit-logs" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AuditLogsPage /></ProtectedRoute>} />
+        <Route path="/admin/audit-logs" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN','ELECTION_ADMIN']}><AuditLogsPage /></ProtectedRoute>} />
         <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SettingsPage /></ProtectedRoute>} />
+         <Route path="/admin/account" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ELECTION_ADMIN']}><AccountPage /></ProtectedRoute>} />
 
         {/* Student routes */}
         <Route path="/student/dashboard" element={<ProtectedRoute allowedRoles={['STUDENT']}><StudentDashboardPage /></ProtectedRoute>} />

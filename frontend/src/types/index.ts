@@ -9,6 +9,7 @@ export interface User {
   lastName: string;
   role: Role;
   isActive?: boolean;
+  profilePicture?: string | null;
   lastLoginAt?: string;
   createdAt?: string;
   student?: Student | null;
@@ -138,6 +139,8 @@ export interface DashboardStats {
     eligibleVoters: number;
     totalCandidates: number;
     totalVotes: number;
+    invalidVotes: number;
+    invalidVotePercent: number;
     voterTurnout: number;
   };
   elections: Array<{
@@ -169,6 +172,7 @@ export interface ResultData {
     positionTitle: string;
     maxWinners: number;
     totalVotes: number;
+    invalidVotes: number;
     hasTie: boolean;
     candidates: Array<{
       id: string;

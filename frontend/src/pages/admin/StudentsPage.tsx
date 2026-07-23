@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { PageLoader, EmptyState, Modal } from '../../components/ui';
+import { PageLoader, EmptyState, Modal, ConfirmDialog } from '../../components/ui';
 import { Button } from '../../components/ui/Button';
 import { Input, Select } from '../../components/ui/FormControls';
 import { Icons } from '../../components/ui/Icons';
@@ -24,6 +24,9 @@ export const StudentsPage: React.FC = () => {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ created: number; skipped: number; errors: string[] } | null>(null);
+  const [showSkippedDetails, setShowSkippedDetails] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const limit = 20;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +69,33 @@ export const StudentsPage: React.FC = () => {
     }
   };
 
+  const handleToggleActive = async (s: Student) => {
+    try {
+      const res = await studentService.toggleActive(s.id);
+      toast.success(`${s.user?.firstName} ${res.isActive ? 'reactivated' : 'deactivated'}`);
+      load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await studentService.remove(deleteTarget.id);
+      toast.success('Student deleted');
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      // If the student has already voted, the backend blocks the delete and
+      // explains why — surface that message directly rather than a generic one.
+      toast.error(getErrorMessage(err), { duration: 6000 });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleImport = async () => {
     if (!importFile) return toast.error('Please select a file');
     setImporting(true);
@@ -85,6 +115,7 @@ export const StudentsPage: React.FC = () => {
     setImportModalOpen(false);
     setImportFile(null);
     setImportResult(null);
+    setShowSkippedDetails(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -212,7 +243,23 @@ export const StudentsPage: React.FC = () => {
                     </button>
                   </td>
                   <td className="text-right">
-                    <span className="text-xs text-slate-400">{s.year}</span>
+                    <div className="flex items-center justify-end gap-1">
+                      <span className="text-xs text-slate-400 mr-2">{s.year}</span>
+                      <button
+                        onClick={() => handleToggleActive(s)}
+                        className="btn-ghost btn-sm"
+                        title={s.user?.isActive ? 'Deactivate' : 'Reactivate'}
+                      >
+                        {s.user?.isActive ? <Icons.X className="w-3.5 h-3.5" /> : <Icons.Check className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        onClick={() => setDeleteTarget(s)}
+                        className="btn-ghost btn-sm text-red-600 hover:bg-red-50"
+                        title="Delete"
+                      >
+                        <Icons.Trash className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -281,13 +328,25 @@ export const StudentsPage: React.FC = () => {
                 <p className="text-2xl font-bold text-emerald-700">{importResult.created}</p>
                 <p className="text-xs text-emerald-600">Created</p>
               </div>
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-center">
+              
+              <button
+                type="button"
+                onClick={() => setShowSkippedDetails((v) => !v)}
+                disabled={importResult.errors.length === 0}
+                className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-center hover:bg-amber-100 transition-colors disabled:hover:bg-amber-50 disabled:cursor-default"
+              >
                 <p className="text-2xl font-bold text-amber-700">{importResult.skipped}</p>
-                <p className="text-xs text-amber-600">Skipped</p>
-              </div>
-            </div>
-            {importResult.errors.length > 0 && (
-              <div className="max-h-40 overflow-y-auto p-3 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-xs text-amber-600 flex items-center justify-center gap-1">
+                  Skipped
+                  {importResult.errors.length > 0 && (
+                    <Icons.ChevronDown className={`w-3 h-3 transition-transform ${showSkippedDetails ? 'rotate-180' : ''}`} />
+                  )}
+                </p>
+              </button>
+
+         </div>
+            {showSkippedDetails && importResult.errors.length > 0 && (
+              <div className="max-h-40 overflow-y-auto p-3 rounded-lg bg-red-50 border border-red-200 space-y-1">
                 {importResult.errors.map((e, i) => <p key={i} className="text-xs text-red-600">{e}</p>)}
               </div>
             )}
@@ -295,6 +354,16 @@ export const StudentsPage: React.FC = () => {
           </div>
         )}
       </Modal>
+
+     <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Student"
+        message={`Delete ${deleteTarget?.user?.firstName} ${deleteTarget?.user?.lastName}? This cannot be undone. If they've already voted, deletion will be blocked to protect election results — deactivate them instead in that case.`}
+        confirmLabel={deleting ? 'Deleting…' : 'Delete'}
+        danger
+      /> 
     </DashboardLayout>
   );
 };

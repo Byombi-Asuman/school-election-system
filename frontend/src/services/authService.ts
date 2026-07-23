@@ -19,6 +19,15 @@ export const authService = {
 
   me: () => api.get<User>('/auth/me').then((r) => r.data),
 
+  updateProfile: (data: { firstName?: string; lastName?: string; email?: string; profilePicture?: File }) => {
+    const fd = new FormData();
+    if (data.firstName) fd.append('firstName', data.firstName);
+    if (data.lastName) fd.append('lastName', data.lastName);
+    if (data.email) fd.append('email', data.email);
+    if (data.profilePicture) fd.append('profilePicture', data.profilePicture);
+    return api.put<User>('/auth/me', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then((r) => r.data);
+  },
+  
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }).then((r) => r.data),
 

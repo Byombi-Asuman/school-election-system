@@ -86,7 +86,7 @@ export const StudentResultsPage: React.FC = () => {
               <div className="card-header flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-slate-900">{pos.positionTitle}</h3>
-                  <p className="text-xs text-slate-500">{pos.totalVotes} votes</p>
+                  <p className="text-xs text-slate-500"> {pos.totalVotes} votes{pos.invalidVotes > 0 && <> · {pos.invalidVotes} declined</>} votes</p>
                 </div>
                 {pos.hasTie && <span className="badge-yellow text-xs">⚠️ Tie</span>}
               </div>

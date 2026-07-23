@@ -16,6 +16,9 @@ export const studentService = {
   toggleEligibility: (id: string) =>
     api.patch<{ isEligible: boolean }>(`/students/${id}/eligibility`).then((r) => r.data),
 
+  toggleActive: (id: string) =>
+    api.patch<{ isActive: boolean }>(`/students/${id}/active`).then((r) => r.data),
+  
   import: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);

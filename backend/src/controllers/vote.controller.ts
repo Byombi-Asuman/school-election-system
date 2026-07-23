@@ -53,18 +53,20 @@ export const castVote = async (req: AuthRequest, res: Response) => {
       }
 
       // Validate candidate is approved and in this election/position
-      const candidate = await prisma.candidate.findFirst({
-        where: {
-          id: vote.candidateId,
-          electionId,
-          positionId: vote.positionId,
-          status: 'APPROVED',
-        },
-      });
+       if (vote.candidateId) {
+        const candidate = await prisma.candidate.findFirst({
+          where: {
+            id: vote.candidateId,
+            electionId,
+            positionId: vote.positionId,
+            status: 'APPROVED',
+          },
+        });
 
       if (!candidate) {
         errors.push(`Invalid candidate for position ${vote.positionId}`);
       }
+    }
     }
 
     if (errors.length > 0) {
@@ -73,12 +75,12 @@ export const castVote = async (req: AuthRequest, res: Response) => {
 
     // Record all votes in a transaction
     const castVotes = await prisma.$transaction(
-      votes.map((vote: { positionId: string; candidateId: string }) =>
+      votes.map((vote: { positionId: string; candidateId?: string | null }) =>
         prisma.vote.create({
           data: {
             electionId,
             positionId: vote.positionId,
-            candidateId: vote.candidateId,
+            candidateId: vote.candidateId || null,
             voterId: student.id,
             ipAddress: req.ip,
             userAgent: req.get('user-agent'),

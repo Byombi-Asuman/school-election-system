@@ -11,6 +11,8 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       eligibleVoters,
       totalCandidates,
       totalVotes,
+      openElectionVotes,
+      openElectionInvalidVotes,
       recentAuditLogs,
       announcements,
     ] = await Promise.all([
@@ -20,6 +22,8 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       prisma.student.count({ where: { isEligible: true } }),
       prisma.candidate.count({ where: { status: 'APPROVED' } }),
       prisma.vote.count(),
+      prisma.vote.count({ where: { election: { status: 'OPEN' } } }),
+      prisma.vote.count({ where: { election: { status: 'OPEN' }, candidateId: null } }),
       prisma.auditLog.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
@@ -78,6 +82,10 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         eligibleVoters,
         totalCandidates,
         totalVotes,
+        invalidVotes: openElectionInvalidVotes,
+        invalidVotePercent: openElectionVotes > 0
+          ? Math.round((openElectionInvalidVotes / openElectionVotes) * 100)
+          : 0,
         voterTurnout: eligibleVoters > 0 ? Math.round((totalVotes / eligibleVoters / Math.max(openElections, 1)) * 100) : 0,
       },
       elections: turnoutData,
